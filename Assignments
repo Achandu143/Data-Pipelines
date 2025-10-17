@@ -1,0 +1,181 @@
+
+
+
+
+---------------------------------------------------------
+# Assignment-2
+-- Create database
+create database EXERCISE_DB;
+---- Assignment - Getting started ----
+
+-- Create table
+create or replace table customers(
+  customer_id int,
+  first_name varchar,
+  last_name varchar,
+  email varchar,
+  age int,
+  city varchar)
+ 
+-- Load data
+copy into customers
+  from s3://snowflake-assignments-mc/gettingstarted/customers.csv
+  file_format = (
+    type = csv 
+    field_delimiter = ',' 
+    skip_header = 1);
+
+
+SELECT * FROM customers;
+
+-----------------------------------------------------------------------------------------------
+# Assignment-3
+---- Assignment solution - Create stage & load data ----
+ 
+-- create stage object
+CREATE OR REPLACE STAGE EXERCISE_DB.public.aws_stage
+    url='s3://snowflake-assignments-mc/loadingdata';
+
+-- List files in stage
+LIST @EXERCISE_DB.public.aws_stage;
+
+-- Load the data 
+COPY INTO EXERCISE_DB.PUBLIC.CUSTOMERS
+    FROM @aws_stage
+    file_format= (type = csv field_delimiter=';' skip_header=1)
+
+-----------------------------------------------------------------------------------------------
+# Assignment-4
+ ---- Assignment - Create file format & load data ----
+ 
+-- create stage object
+CREATE OR REPLACE STAGE EXERCISE_DB.public.aws_stage
+    url='s3://snowflake-assignments-mc/fileformat';
+
+-- List files in stage
+LIST @EXERCISE_DB.public.aws_stage;
+
+-- create file format object
+CREATE OR REPLACE FILE FORMAT EXERCISE_DB.public.aws_fileformat
+TYPE = CSV
+FIELD_DELIMITER='|'
+SKIP_HEADER=1;
+
+-- Load the data 
+COPY INTO EXERCISE_DB.PUBLIC.CUSTOMERS
+    FROM @aws_stage
+      file_format= (FORMAT_NAME=EXERCISE_DB.public.aws_fileformat)
+      
+-- Alternative
+COPY INTO EXERCISE_DB.PUBLIC.CUSTOMERS
+    FROM @aws_stage
+      file_format= EXERCISE_DB.public.aws_fileformat
+-----------------------------------------------------------------------------------------------
+# Assignment-5
+create or replace table employee(
+      customer_id int,
+      first_name varchar(50),
+      last_name varchar(50),
+      email varchar(50),
+      age int,
+      department varchar(50)
+      ) 
+
+create or replace stage aws_stage
+url='s3://snowflake-assignments-mc/copyoptions/example1'
+
+-- create file format object
+CREATE OR REPLACE FILE FORMAT EXERCISE_DB.public.aws_fileformat
+TYPE = CSV
+FIELD_DELIMITER=','
+SKIP_HEADER=1;
+
+
+List @aws_stage_error;
+
+-- Use validation mode
+COPY INTO EXERCISE_DB.PUBLIC.EMPLOYEE
+    FROM @aws_stage
+      file_format= EXERCISE_DB.public.aws_fileformat
+      VALIDATION_MODE = RETURN_ERRORS;
+ 
+COPY INTO EXERCISE_DB.PUBLIC.EMPLOYEE
+    FROM @aws_stage
+      file_format= EXERCISE_DB.public.aws_fileformat
+      ON_ERROR = CONTINUE;   
+      
+select * from customer;
+
+
+
+------------------------------------------------------------------------------------------------------
+# Assignment 6
+
+ -- Create table
+create or replace table employees(
+  customer_id int,
+  first_name varchar(50),
+  last_name varchar(50),
+  email varchar(50),
+  age int,
+  department varchar(50));
+
+
+-- create stage object
+CREATE OR REPLACE STAGE EXERCISE_DB.public.aws_stage
+    url='s3://snowflake-assignments-mc/copyoptions/example2';
+ 
+-- create file format object
+CREATE OR REPLACE FILE FORMAT EXERCISE_DB.public.aws_fileformat
+TYPE = CSV
+FIELD_DELIMITER=','
+SKIP_HEADER=1;
+
+ 
+-- Use validation mode
+COPY INTO EXERCISE_DB.PUBLIC.EMPLOYEES
+    FROM @aws_stage
+      file_format= EXERCISE_DB.public.aws_fileformat
+      VALIDATION_MODE = RETURN_ERRORS;
+
+
+-- Use TRUNCATECOLUMNS
+
+COPY INTO EXERCISE_DB.PUBLIC.EMPLOYEES
+    FROM @aws_stage
+      file_format= EXERCISE_DB.public.aws_fileformat
+      TRUNCATECOLUMNS = TRUE; 
+
+--------------------------------------------------------------------------------------------------------
+# Assignment 7
+
+--1. Create a stage object that is pointing to 's3://snowflake-assignments-mc/unstructureddata/'
+
+
+create or replace stage EXERCISE_DB.PUBLIC.aws_stage
+url='s3://snowflake-assignments-mc/unstructureddata/';
+
+list @EXERCISE_DB.PUBLIC.aws_stage;
+--2. Create a file format object that is using TYPE = JSON
+
+create or replace file format EXERCISE_DB.PUBLIC.RAWJSON_FILEFORMAT
+type=json;
+
+--3. Create a table called JSON_RAW with one column
+--Column name: Raw
+--Column type: Variant
+
+create or replace table JSON_RAW(
+Raw variant
+);
+
+select * from JSON_RAW;
+
+--4. Copy the raw data in the JSON_RAW table using the file format object and stage object
+
+copy into JSON_RAW
+from @EXERCISE_DB.PUBLIC.AWS_STAGE
+file_format= EXERCISE_DB.PUBLIC.RAWJSON_FILEFORMAT;
+
+--Questions for this assignment
+--What is the last name of the person in the first row (id=1)?
